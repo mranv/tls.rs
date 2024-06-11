@@ -1,5 +1,3 @@
-
-
 # tls.rs : Secure TCP Client-Server in Rust
 
 This repository contains a simple implementation of a secure TCP client-server application in Rust. The communication between the client and the server is secured using SSL/TLS with public/private key configuration. The server sends data to the client in real-time, and the client prints this data as it is received.
@@ -7,7 +5,7 @@ This repository contains a simple implementation of a secure TCP client-server a
 ## Features
 
 - Asynchronous TCP communication using `tokio`.
-- SSL/TLS encryption using `rustls` and `tokio-rustls`.
+- SSL/TLS encryption using `native-tls` and `tokio-native-tls`.
 - Public/private key authentication.
 - Real-time data transmission from server to client.
 
@@ -24,60 +22,97 @@ To run the server and client, you need to generate the necessary certificates an
 
 1. Generate a private key:
 
-    ```sh
-    openssl genpkey -algorithm RSA -out server.key
-    ```
+   ```sh
+   openssl genrsa -out key.pem 2048
+   ```
 
 2. Generate a certificate signing request (CSR):
 
-    ```sh
-    openssl req -new -key server.key -out server.csr
-    ```
+   ```sh
+   openssl req -new -key key.pem -out cert.csr
+   ```
 
 3. Generate a self-signed certificate:
 
-    ```sh
-    openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
-    ```
+   ```sh
+   openssl x509 -req -days 365 -in cert.csr -signkey key.pem -out cert.pem
+   ```
 
-4. Generate a CA certificate for the client:
+4. Convert the key and certificate to PKCS#12 format:
 
-    ```sh
-    openssl req -x509 -new -nodes -key server.key -sha256 -days 1024 -out ca.crt
-    ```
+   ```sh
+   openssl pkcs12 -export -out identity.pfx -inkey key.pem -in cert.pem
+   ```
+
+   Use `password` when prompted for an export password.
 
 ### Running the Server
 
-1. Ensure you have the required dependencies:
+1. Navigate to the `server` directory:
 
-    ```sh
-    cargo build
-    ```
+   ```sh
+   cd server
+   ```
 
-2. Run the server:
+2. Ensure you have the required dependencies:
 
-    ```sh
-    cargo run --bin server
-    ```
+   ```sh
+   cargo build --release
+   ```
+
+3. Run the server:
+
+   ```sh
+   cargo run --release
+   ```
 
 ### Running the Client
 
-1. Ensure you have the required dependencies:
+1. Navigate to the `client` directory:
 
-    ```sh
-    cargo build
-    ```
+   ```sh
+   cd client
+   ```
 
-2. Run the client:
+2. Ensure you have the required dependencies:
 
-    ```sh
-    cargo run --bin client
-    ```
+   ```sh
+   cargo build --release
+   ```
+
+3. Run the client:
+
+   ```sh
+   cargo run --release
+   ```
 
 ## Project Structure
 
-- `src/main.rs`: Main server implementation.
-- `src/client.rs`: Main client implementation.
-- `server.crt`: Server certificate.
-- `server.key`: Server private key.
-- `ca.crt`: CA certificate for the client.
+```
+tls.rs
+├── certs
+│   ├── cert.csr
+│   ├── cert.pem
+│   ├── identity.pfx
+│   └── key.pem
+├── client
+│   ├── Cargo.lock
+│   ├── Cargo.toml
+│   └── src
+│       └── main.rs
+├── README.md
+└── server
+    ├── Cargo.lock
+    ├── Cargo.toml
+    └── src
+        └── main.rs
+```
+
+- `certs/`: Directory containing the certificate and key files.
+- `client/`: Directory containing the client implementation.
+  - `Cargo.toml`: Client dependencies.
+  - `src/main.rs`: Main client implementation.
+- `server/`: Directory containing the server implementation.
+  - `Cargo.toml`: Server dependencies.
+  - `src/main.rs`: Main server implementation.
+- `README.md`: This readme file.
