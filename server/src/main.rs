@@ -8,7 +8,7 @@ use std::io::Read;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Load server's identity
-    let mut file = File::open("/home/mranv/Desktop/d3v/tls.rs/certs/identity.pfx")?;
+    let mut file = File::open("identity.pfx")?;
     let mut identity = vec![];
     file.read_to_end(&mut identity)?;
     let identity = Identity::from_pkcs12(&identity, "password")?;
@@ -25,9 +25,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let (socket, _) = listener.accept().await?;
         let acceptor = acceptor.clone();
         tokio::spawn(async move {
-            let mut tls_stream = acceptor.accept(socket).await.unwrap();
-            tls_stream.write_all(b"Hello from server!").await.unwrap();
-            tls_stream.shutdown().await.unwrap();
+            match acceptor.accept(socket).await {
+                Ok(mut tls_stream) => {
+                    if let Err(e) = tls_stream.write_all(b"Hello from server!").await {
+                        eprintln!("Failed to write to stream: {}", e);
+                    }
+                    if let Err(e) = tls_stream.shutdown().await {
+                        eprintln!("Failed to shut down stream: {}", e);
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Failed to accept connection: {}", e);
+                }
+            }
         });
     }
 }

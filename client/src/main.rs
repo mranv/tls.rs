@@ -5,7 +5,9 @@ use native_tls::TlsConnector as NativeTlsConnector;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let connector = NativeTlsConnector::new()?;
+    let mut connector = NativeTlsConnector::builder();
+    connector.danger_accept_invalid_certs(true); // Accept self-signed certificates
+    let connector = connector.build()?;
     let connector = TlsConnector::from(connector);
 
     // Connect to the server
