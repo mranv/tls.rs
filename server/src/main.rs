@@ -8,7 +8,7 @@ use std::io::Read;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Load server's identity
-    let mut file = File::open("identity.pfx")?;
+    let mut file = File::open("../certs/identity.pfx")?; // Adjusted path to identity.pfx
     let mut identity = vec![];
     file.read_to_end(&mut identity)?;
     let identity = Identity::from_pkcs12(&identity, "password")?;
